@@ -31,7 +31,7 @@ public class TransactionsController {
     @GetMapping("/transactions")
     public SearchResults<String, String> listTransactions(@RequestParam String iban) {
         RediSearchCommands<String, String> commands = srmc.sync();
-        String searchQuery = "'@toAccount:" + iban +"'";
+        String searchQuery = "'@toAccount:" + iban + "'";
         SearchResults<String, String> results = commands.search(SEARCH_INDEX, searchQuery);
         return results;
     }
@@ -40,6 +40,7 @@ public class TransactionsController {
     @SuppressWarnings("all")
     public SearchResults<String, String> searchTransactions(@RequestParam("term") String term,
             @RequestParam("iban") String iban) {
+
         RediSearchCommands<String, String> commands = srmc.sync();
 
         SearchOptions options = SearchOptions
@@ -47,8 +48,8 @@ public class TransactionsController {
                         .field("transactionType").tags("<mark>", "</mark>").build())
                 .build();
 
-        String searchQuery = "'@toAccount:" + iban + "(@description:" + term + "* | @fromAccountName:" + term
-                + "* | @transactionType:" + term + "*)'";
+        String searchQuery = "'@toAccount:" + iban + "(@description:" + term + " | @fromAccountName:" + term
+                + " | @transactionType:" + term + ")'";
 
         SearchResults<String, String> results = commands.search(SEARCH_INDEX, searchQuery, options);
         return results;
