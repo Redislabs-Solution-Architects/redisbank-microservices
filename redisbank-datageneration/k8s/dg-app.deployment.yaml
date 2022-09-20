@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redisbank-dg-deployment
+spec:
+  selector:
+    matchLabels:
+      app: redisbank-dg
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: redisbank-dg
+    spec:
+      containers:
+      - name: redisbank-dg
+        image: <yourdockerhubid>/redisbank-dg:latest
+        imagePullPolicy: Always
+        ports:
+        - name: redisbank-dg
+          containerPort: 8080
+        env:
+        - name: SPRING_REDIS_HOST
+          value: ""
+        - name: SPRING_REDIS_PORT
+          value: "443"
+        - name: SPRING_REDIS_PASSWORD
+          value: ""
+        - name: SPRING_PROFILES_ACTIVE
+          value: "tls"
