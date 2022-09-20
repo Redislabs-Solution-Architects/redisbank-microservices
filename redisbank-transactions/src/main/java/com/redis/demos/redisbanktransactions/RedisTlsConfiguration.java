@@ -44,7 +44,7 @@ public class RedisTlsConfiguration {
 	}
 
 	/*
-	 * This method creates a client to connect to the local database (Redis, has TimeSeries, so preferably no A-A)
+	 * This method creates a client to connect to the local database (Redis)
 	 */
 	@Bean(name = "redisModulesConnection", destroyMethod = "close")
 	StatefulRedisModulesConnection<String, String> statefulRedisModulesConnection(
