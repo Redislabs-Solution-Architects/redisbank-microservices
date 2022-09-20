@@ -1,0 +1,19 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: redisbank-tr
+  name: redisbank-tr
+  namespace: redis-demo
+spec:
+  host: <yourhost>
+  port:
+    targetPort: redisbank-tr
+  tls:
+    insecureEdgeTerminationPolicy: None
+    termination: edge
+  to:
+    kind: Service
+    name: redisbank-tr
+    weight: 100
+  wildcardPolicy: None

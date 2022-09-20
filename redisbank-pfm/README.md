@@ -1,4 +1,4 @@
-## Redisbank test data generation app
+## Redisbank pfm app
 
 ## Building and publishing
 
