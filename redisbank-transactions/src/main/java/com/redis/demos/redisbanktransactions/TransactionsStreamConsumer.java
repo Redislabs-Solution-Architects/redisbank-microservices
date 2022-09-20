@@ -19,7 +19,10 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.redis.lettucemod.api.StatefulRedisModulesConnection;
 import com.redis.lettucemod.api.sync.RediSearchCommands;
+import com.redis.lettucemod.search.CreateOptions;
+import com.redis.lettucemod.search.CreateOptions.DataType;
 import com.redis.lettucemod.search.Field;
+import com.redis.lettucemod.search.TextField.PhoneticMatcher;
 
 import io.lettuce.core.RedisCommandExecutionException;
 
@@ -32,22 +35,20 @@ public class TransactionsStreamConsumer
     private static final Logger LOGGER = LoggerFactory.getLogger(TransactionsStreamConsumer.class);
     private static final String TRANSACTIONS_STREAM = "transactions";
 
-    private final StringRedisTemplate redis;
+    private final StringRedisTemplate transactionsRedis;
     private final Config config;
 
     private StreamMessageListenerContainer<String, MapRecord<String, String, String>> container;
     private Subscription subscription;
     private final SimpMessageSendingOperations smso;
-    private final BankTransactionRepository btr;
-    private final StatefulRedisModulesConnection<String, String> srmc;
+    private final StatefulRedisModulesConnection<String, String> amRedis;
 
-    public TransactionsStreamConsumer(Config config, StringRedisTemplate redis, SimpMessageSendingOperations smso,
-            BankTransactionRepository btr, StatefulRedisModulesConnection<String, String> srmc) {
+    public TransactionsStreamConsumer(Config config, StringRedisTemplate transactionsRedis,
+            SimpMessageSendingOperations smso, StatefulRedisModulesConnection<String, String> amRedis) {
         this.config = config;
-        this.redis = redis;
+        this.transactionsRedis = transactionsRedis;
         this.smso = smso;
-        this.btr = btr;
-        this.srmc = srmc;
+        this.amRedis = amRedis;
     }
 
     @Override
@@ -56,39 +57,44 @@ public class TransactionsStreamConsumer
         setupSearchIndex();
     }
 
+    @SuppressWarnings("unchecked")
     private void setupSearchIndex() {
-        RediSearchCommands<String, String> commands = srmc.sync();
+        RediSearchCommands<String, String> commands = amRedis.sync();
         try {
-            commands.dropindex(SEARCH_INDEX);
+            commands.ftDropindex(SEARCH_INDEX);
         } catch (RedisCommandExecutionException e) {
             if (!e.getMessage().equals("Unknown Index name")) {
                 LOGGER.error("Error dropping index: {}", e.getMessage());
                 throw new RuntimeException(e);
             }
         }
-        commands.create(SEARCH_INDEX,
-                Field.text("toAccount").build(),
-                Field.text("description").matcher(Field.TextField.PhoneticMatcher.ENGLISH).build(),
-                Field.text("fromAccountName").matcher(Field.TextField.PhoneticMatcher.ENGLISH).build(),
-                Field.text("transactionType").matcher(Field.TextField.PhoneticMatcher.ENGLISH).build());
+
+        CreateOptions<String, String> createOptions = CreateOptions.<String, String>builder().on(DataType.JSON).build();
+
+        commands.ftCreate(SEARCH_INDEX, createOptions,
+                Field.text("$.toAccount").as("toAccount").build(),
+                Field.text("$.description").as("description").matcher(PhoneticMatcher.ENGLISH).build(),
+                Field.text("$.fromAccountName").as("fromAccountName").matcher(PhoneticMatcher.ENGLISH).build(),
+                Field.text("$.transactionType").as("transactionType").matcher(PhoneticMatcher.ENGLISH).build());
         LOGGER.info("Created {} index", SEARCH_INDEX);
     }
 
     private void setupStreamToWebSocket() throws InterruptedException {
-        this.container = StreamMessageListenerContainer.create(redis.getConnectionFactory(),
+        this.container = StreamMessageListenerContainer.create(transactionsRedis.getConnectionFactory(),
                 StreamMessageListenerContainerOptions.builder().pollTimeout(Duration.ofMillis(1000)).build());
         container.start();
-        this.subscription = container.receive(StreamOffset.fromStart(TRANSACTIONS_STREAM), this);
+        this.subscription = container.receive(StreamOffset.latest(TRANSACTIONS_STREAM), this);
         subscription.await(Duration.ofSeconds(10));
     }
 
     @Override
     public void onMessage(MapRecord<String, String, String> message) {
-        //TODO : websocket stuff can be removed, code, pom, etc.
+        // TODO : websocket stuff can be removed, code, pom, etc.
         LOGGER.info("Message received from stream: {}", message);
         String messageString = message.getValue().get("transaction");
         try {
-            btr.save(SerializationUtil.deserializeObject(messageString, BankTransaction.class));
+            BankTransaction bt = SerializationUtil.deserializeObject(messageString, BankTransaction.class);
+            amRedis.sync().jsonSet("transaction_" + bt.getId(), "$", messageString);
         } catch (JsonProcessingException e) {
             LOGGER.error("Error parsing JSON: {}", e.getMessage());
         }

@@ -17,6 +17,9 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
 
+/*
+ * Don't do this in production folks. TLS and certs are important.
+ */
 @Configuration()
 @Profile("tls")
 public class RedisTlsConfiguration {
