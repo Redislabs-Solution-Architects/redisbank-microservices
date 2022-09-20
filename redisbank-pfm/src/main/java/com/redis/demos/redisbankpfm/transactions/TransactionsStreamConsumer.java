@@ -3,6 +3,7 @@ package com.redis.demos.redisbankpfm.transactions;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.time.Duration;
+import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,30 +30,34 @@ public class TransactionsStreamConsumer
     private static final Logger LOGGER = LoggerFactory.getLogger(TransactionsStreamConsumer.class);
     private static final String TRANSACTIONS_STREAM = "transactions";
 
-    private final StringRedisTemplate redis;
-    private final StatefulRedisModulesConnection<String, String> srmc;
-    private final NumberFormat nf = NumberFormat.getCurrencyInstance();
+    private final StringRedisTemplate transactionsRedis;
+    private final StatefulRedisModulesConnection<String, String> pfmRedis;
+    private final NumberFormat nf = NumberFormat.getCurrencyInstance(Locale.US);
 
     private StreamMessageListenerContainer<String, MapRecord<String, String, String>> container;
     private Subscription subscription;
 
-    public TransactionsStreamConsumer(StringRedisTemplate redis, StatefulRedisModulesConnection<String, String> srmc) {
-        this.redis = redis;
-        this.srmc = srmc;
+    public TransactionsStreamConsumer(StringRedisTemplate transactionsRedis,
+            StatefulRedisModulesConnection<String, String> pfmRedis) {
+        this.transactionsRedis = transactionsRedis;
+        this.pfmRedis = pfmRedis;
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.container = StreamMessageListenerContainer.create(redis.getConnectionFactory(),
+        subscribeToTransactionsStream();
+    }
+
+    private void subscribeToTransactionsStream() throws InterruptedException {
+        this.container = StreamMessageListenerContainer.create(transactionsRedis.getConnectionFactory(),
                 StreamMessageListenerContainerOptions.builder().pollTimeout(Duration.ofMillis(1000)).build());
         container.start();
-        this.subscription = container.receive(StreamOffset.fromStart(TRANSACTIONS_STREAM), this);
+        this.subscription = container.receive(StreamOffset.latest(TRANSACTIONS_STREAM), this);
         subscription.await(Duration.ofSeconds(10));
     }
 
     @Override
     public void onMessage(MapRecord<String, String, String> message) {
-
         LOGGER.info("Message received from stream: {}", message);
         String messageString = message.getValue().get("transaction");
 
@@ -73,7 +78,7 @@ public class TransactionsStreamConsumer
         try {
             Number balanceAfter = nf.parse(bankTransaction.getBalanceAfter());
             Sample sample = Sample.of(balanceAfter.doubleValue());
-            srmc.sync().tsAdd(timeSeriesKey, sample);
+            pfmRedis.sync().tsAdd(timeSeriesKey, sample);
         } catch (ParseException e) {
             LOGGER.error("Error parsing transaction amount: {}", e.getMessage());
         }
@@ -85,7 +90,7 @@ public class TransactionsStreamConsumer
         String sortedSetKey = "biggest_spenders_" + bankTransaction.getToAccount();
         try {
             Number amount = nf.parse(bankTransaction.getAmount());
-            srmc.sync().zadd(sortedSetKey, amount.doubleValue(), fromAccount);
+            pfmRedis.sync().zadd(sortedSetKey, amount.doubleValue(), fromAccount);
         } catch (ParseException e) {
             LOGGER.error("Error parsing transaction amount: {}", e.getMessage());
         }
