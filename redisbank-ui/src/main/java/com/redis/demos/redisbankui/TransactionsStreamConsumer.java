@@ -41,7 +41,7 @@ public class TransactionsStreamConsumer
         this.container = StreamMessageListenerContainer.create(redis.getConnectionFactory(),
                 StreamMessageListenerContainerOptions.builder().pollTimeout(Duration.ofMillis(1000)).build());
         container.start();
-        this.subscription = container.receive(StreamOffset.fromStart(TRANSACTIONS_STREAM), this);
+        this.subscription = container.receive(StreamOffset.latest(TRANSACTIONS_STREAM), this);
         subscription.await(Duration.ofSeconds(10));
     }
 
