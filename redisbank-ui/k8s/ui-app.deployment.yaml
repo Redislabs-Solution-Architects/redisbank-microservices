@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redisbank-ui-deployment
+spec:
+  selector:
+    matchLabels:
+      app: redisbank-ui
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: redisbank-ui
+    spec:
+      containers:
+      - name: redisbank-ui
+        image: <yourdockerhubid>/redisbank-ui:latest
+        imagePullPolicy: Always
+        ports:
+        - name: redisbank-ui
+          containerPort: 8080
+        env:
+        - name: AM_URI
+          value: ""
+        - name: PFM_URI
+          value: ""
+        - name: TR_URI
+          value: ""
+        - name: STOMP_HOST
+          value: ""
+        - name: STOMP_PORT
+          value: "443"
+        - name: STOMP_PROTOCOL
+          value: "wss"
+        - name: SPRING_REDIS_HOST
+          value: ""
+        - name: SPRING_REDIS_PORT
+          value: "443"
+        - name: SPRING_PROFILES_ACTIVE
+          value: "tls"
+
