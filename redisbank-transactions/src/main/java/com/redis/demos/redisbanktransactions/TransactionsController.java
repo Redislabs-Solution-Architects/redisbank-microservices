@@ -44,7 +44,8 @@ public class TransactionsController {
         RediSearchCommands<String, String> commands = amRedis.sync();
 
         SearchOptions options = SearchOptions
-                .builder().highlight(SearchOptions.Highlight.builder().field("description").field("fromAccountName")
+                .builder()
+                .highlight(SearchOptions.Highlight.builder().field("description").field("fromAccountName")
                         .field("transactionType").tags("<mark>", "</mark>").build())
                 .build();
 

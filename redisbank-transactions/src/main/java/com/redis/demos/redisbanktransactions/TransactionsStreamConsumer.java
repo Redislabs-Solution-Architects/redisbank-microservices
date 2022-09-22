@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.redis.lettucemod.api.StatefulRedisModulesConnection;
 import com.redis.lettucemod.api.sync.RediSearchCommands;
+import com.redis.lettucemod.api.sync.RedisModulesCommands;
 import com.redis.lettucemod.search.CreateOptions;
 import com.redis.lettucemod.search.CreateOptions.DataType;
 import com.redis.lettucemod.search.Field;
@@ -41,14 +42,14 @@ public class TransactionsStreamConsumer
     private StreamMessageListenerContainer<String, MapRecord<String, String, String>> container;
     private Subscription subscription;
     private final SimpMessageSendingOperations smso;
-    private final StatefulRedisModulesConnection<String, String> amRedis;
+    private final StatefulRedisModulesConnection<String, String> trRedis;
 
     public TransactionsStreamConsumer(Config config, StringRedisTemplate transactionsRedis,
-            SimpMessageSendingOperations smso, StatefulRedisModulesConnection<String, String> amRedis) {
+            SimpMessageSendingOperations smso, StatefulRedisModulesConnection<String, String> trRedis) {
         this.config = config;
         this.transactionsRedis = transactionsRedis;
         this.smso = smso;
-        this.amRedis = amRedis;
+        this.trRedis = trRedis;
     }
 
     @Override
@@ -59,7 +60,7 @@ public class TransactionsStreamConsumer
 
     @SuppressWarnings("unchecked")
     private void setupSearchIndex() {
-        RediSearchCommands<String, String> commands = amRedis.sync();
+        RediSearchCommands<String, String> commands = trRedis.sync();
         try {
             commands.ftDropindex(SEARCH_INDEX);
         } catch (RedisCommandExecutionException e) {
@@ -74,8 +75,8 @@ public class TransactionsStreamConsumer
         commands.ftCreate(SEARCH_INDEX, createOptions,
                 Field.text("$.toAccount").as("toAccount").build(),
                 Field.text("$.description").as("description").matcher(PhoneticMatcher.ENGLISH).build(),
-                Field.text("$.fromAccountName").as("fromAccountName").matcher(PhoneticMatcher.ENGLISH).build(),
-                Field.text("$.transactionType").as("transactionType").matcher(PhoneticMatcher.ENGLISH).build());
+                Field.text("$.transactionType").as("transactionType").matcher(PhoneticMatcher.ENGLISH).build(),
+                Field.text("$.fromAccountName").as("fromAccountName").matcher(PhoneticMatcher.ENGLISH).build());
         LOGGER.info("Created {} index", SEARCH_INDEX);
     }
 
@@ -94,12 +95,30 @@ public class TransactionsStreamConsumer
         String messageString = message.getValue().get("transaction");
         try {
             BankTransaction bt = SerializationUtil.deserializeObject(messageString, BankTransaction.class);
-            amRedis.sync().jsonSet("transaction_" + bt.getId(), "$", messageString);
+            RedisModulesCommands<String, String> commands = trRedis.sync();
+            LOGGER.info("storing BT: {}", bt.toString());
+            // trRedis.sync().jsonSet("transaction_" + bt.getId(), "$", messageString);
+            String initialJsonDoc = "{\"id\":\"" + bt.getId() + "\"" + "}";
+            commands.jsonSet("transaction_" + bt.getId(), "$", initialJsonDoc);
+            commands.jsonSet("transaction_" + bt.getId(), "$.id", "" + bt.getId());
+            commands.jsonSet("transaction_" + bt.getId(), "$.fromAccount", escapeValue(bt.getFromAccount()));
+            commands.jsonSet("transaction_" + bt.getId(), "$.toAccount", escapeValue(bt.getToAccount()));
+            commands.jsonSet("transaction_" + bt.getId(), "$.fromAccountName", escapeValue(bt.getFromAccountName()));
+            commands.jsonSet("transaction_" + bt.getId(), "$.toAccountName", escapeValue(bt.getToAccountName()));
+            commands.jsonSet("transaction_" + bt.getId(), "$.description", escapeValue(bt.getDescription()));
+            commands.jsonSet("transaction_" + bt.getId(), "$.transactionType", escapeValue(bt.getTransactionType()));
+            commands.jsonSet("transaction_" + bt.getId(), "$.amount", escapeValue(bt.getAmount()));
+            commands.jsonSet("transaction_" + bt.getId(), "$.balanceAfter", escapeValue(bt.getBalanceAfter()));
+            commands.jsonSet("transaction_" + bt.getId(), "$.transactionDate", escapeValue(bt.getTransactionDate()));
         } catch (JsonProcessingException e) {
             LOGGER.error("Error parsing JSON: {}", e.getMessage());
         }
         smso.convertAndSend(config.getStomp().getTransactionsTopic(), message.getValue());
         LOGGER.info("Websocket message: {}", messageString);
+    }
+
+    String escapeValue(String value) {
+        return "\"" + value + "\"";
     }
 
     @Override

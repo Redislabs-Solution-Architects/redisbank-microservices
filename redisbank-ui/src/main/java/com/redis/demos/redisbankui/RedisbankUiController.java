@@ -1,7 +1,11 @@
 package com.redis.demos.redisbankui;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -13,15 +17,21 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.redis.demos.redisbankui.Config.StompConfig;
+import com.redis.lettucemod.search.Document;
 import com.redis.lettucemod.search.SearchResults;
 
 @RestController
 @RequestMapping(path = "/api")
 @CrossOrigin
 public class RedisbankUiController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RedisbankUiController.class);
 
     private Config config;
     private RestTemplate restTemplate;
@@ -62,24 +72,42 @@ public class RedisbankUiController {
     }
 
     @GetMapping("/transactions")
-    public SearchResults<String, String> listTransactions() {
+    public List<BankTransaction> listTransactions() throws JsonMappingException, JsonProcessingException, RestClientException {
         URI transactionsUri = URI.create(trUri + "/transactions?iban=" + getAuthenticatedUserIban());
-        return restTemplate
+        return convertSearchResults(restTemplate
                 .exchange(transactionsUri, HttpMethod.GET, null,
                         new ParameterizedTypeReference<SearchResults<String, String>>() {
                         })
-                .getBody();
+                .getBody());
     }
 
     @GetMapping("/search")
-    public SearchResults<String, String> searchTransactions(@RequestParam("term") String term) {
+    public List<BankTransaction> searchTransactions(@RequestParam("term") String term) throws JsonMappingException, JsonProcessingException, RestClientException {
         URI transactionsUri = URI
                 .create(trUri + "/search?iban=" + getAuthenticatedUserIban() + "&term=" + term);
-        return restTemplate
+        return convertSearchResults(restTemplate
                 .exchange(transactionsUri, HttpMethod.GET, null,
                         new ParameterizedTypeReference<SearchResults<String, String>>() {
                         })
-                .getBody();
+                .getBody());
+                
+    }
+
+    List<BankTransaction> convertSearchResults(SearchResults<String, String> results) throws JsonMappingException, JsonProcessingException  {
+        List<BankTransaction> converted = new ArrayList<>();
+
+        for (Document<String,String> document: results) {
+            LOGGER.info("Document payload: {}", document.getPayload());
+            LOGGER.info("Document id: {}", document.getId());
+            LOGGER.info("Document keyset: {}", document.keySet());
+            LOGGER.info("Document values: {}", document.values());
+            String value = document.values().iterator().next();
+            LOGGER.info("Document string: {}", value);
+            BankTransaction bt = SerializationUtil.deserializeObject(value, BankTransaction.class);
+            converted.add(bt);
+        }
+        LOGGER.info("Total set returned: {}", converted);
+        return converted;
     }
 
     private String getAuthenticatedUserIban() {
