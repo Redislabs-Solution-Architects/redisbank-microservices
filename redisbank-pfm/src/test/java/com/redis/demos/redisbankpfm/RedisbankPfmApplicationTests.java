@@ -24,6 +24,8 @@ class RedisbankPfmApplicationTests {
 	static void redisProperties(DynamicPropertyRegistry registry) {
 		registry.add("spring.redis.host", redisContainer::getContainerIpAddress);
 		registry.add("spring.redis.port", redisContainer::getFirstMappedPort);
+		registry.add("spring.redis.host-tr", redisContainer::getContainerIpAddress);
+		registry.add("spring.redis.port-tr", redisContainer::getFirstMappedPort);
 	}
 
 	@Test
