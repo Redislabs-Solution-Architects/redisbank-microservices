@@ -1,4 +1,4 @@
-# About this repository
+# About this repository (work in progress, first release coming 'soon')
 
 This repository uses Redis core data structures, Streams, RediSearch and TimeSeries to build a
 Java/Spring Boot/Spring Data Redis Reactive application that shows a searchable transaction overview with realtime updates
