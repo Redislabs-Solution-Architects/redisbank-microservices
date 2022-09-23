@@ -4,8 +4,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -30,8 +28,6 @@ import com.redis.lettucemod.search.SearchResults;
 @RequestMapping(path = "/api")
 @CrossOrigin
 public class RedisbankUiController {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(RedisbankUiController.class);
 
     private Config config;
     private RestTemplate restTemplate;
@@ -72,7 +68,8 @@ public class RedisbankUiController {
     }
 
     @GetMapping("/transactions")
-    public List<BankTransaction> listTransactions() throws JsonMappingException, JsonProcessingException, RestClientException {
+    public List<BankTransaction> listTransactions()
+            throws JsonMappingException, JsonProcessingException, RestClientException {
         URI transactionsUri = URI.create(trUri + "/transactions?iban=" + getAuthenticatedUserIban());
         return convertSearchResults(restTemplate
                 .exchange(transactionsUri, HttpMethod.GET, null,
@@ -82,7 +79,8 @@ public class RedisbankUiController {
     }
 
     @GetMapping("/search")
-    public List<BankTransaction> searchTransactions(@RequestParam("term") String term) throws JsonMappingException, JsonProcessingException, RestClientException {
+    public List<BankTransaction> searchTransactions(@RequestParam("term") String term)
+            throws JsonMappingException, JsonProcessingException, RestClientException {
         URI transactionsUri = URI
                 .create(trUri + "/search?iban=" + getAuthenticatedUserIban() + "&term=" + term);
         return convertSearchResults(restTemplate
@@ -90,23 +88,18 @@ public class RedisbankUiController {
                         new ParameterizedTypeReference<SearchResults<String, String>>() {
                         })
                 .getBody());
-                
+
     }
 
-    List<BankTransaction> convertSearchResults(SearchResults<String, String> results) throws JsonMappingException, JsonProcessingException  {
+    List<BankTransaction> convertSearchResults(SearchResults<String, String> results)
+            throws JsonMappingException, JsonProcessingException {
         List<BankTransaction> converted = new ArrayList<>();
 
-        for (Document<String,String> document: results) {
-            LOGGER.info("Document payload: {}", document.getPayload());
-            LOGGER.info("Document id: {}", document.getId());
-            LOGGER.info("Document keyset: {}", document.keySet());
-            LOGGER.info("Document values: {}", document.values());
+        for (Document<String, String> document : results) {
             String value = document.values().iterator().next();
-            LOGGER.info("Document string: {}", value);
             BankTransaction bt = SerializationUtil.deserializeObject(value, BankTransaction.class);
             converted.add(bt);
         }
-        LOGGER.info("Total set returned: {}", converted);
         return converted;
     }
 

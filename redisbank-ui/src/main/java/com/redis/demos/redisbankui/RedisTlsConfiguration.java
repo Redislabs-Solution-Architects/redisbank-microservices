@@ -3,6 +3,7 @@ package com.redis.demos.redisbankui;
 import java.time.Duration;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -10,8 +11,11 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 
+import com.redis.spring.lettucemod.RedisModulesAutoConfiguration;
+
 @Configuration()
 @Profile("tls")
+@EnableAutoConfiguration(exclude = RedisModulesAutoConfiguration.class)
 public class RedisTlsConfiguration {
 
 	@Bean
