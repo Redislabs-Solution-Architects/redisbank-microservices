@@ -3,6 +3,7 @@ package com.redis.demos.redisbanktransactions;
 import java.time.Duration;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -12,6 +13,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 
 import com.redis.lettucemod.RedisModulesClient;
 import com.redis.lettucemod.api.StatefulRedisModulesConnection;
+import com.redis.spring.lettucemod.RedisModulesAutoConfiguration;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.resource.ClientResources;
@@ -22,6 +24,7 @@ import io.lettuce.core.resource.DefaultClientResources;
  */
 @Configuration()
 @Profile("tls")
+@EnableAutoConfiguration(exclude = RedisModulesAutoConfiguration.class)
 public class RedisTlsConfiguration {
 
 	/*
