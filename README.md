@@ -31,5 +31,11 @@ Contrary to the monolithic version of this application (<https://github.com/Redi
 1. Start each app using `./mvnw spring-boot:run` (the order is not important, but what you'll communicate with from the browser is [redisbank-ui](redisbank-ui))
 1. Navigate a browser to [http://localhost:8080](http://localhost:8080) and login
 
-### Using Docker compose
-1. Start everything using `docker-compose up`
+### Kubernetes
+
+For now this repo has files for deploying on OpenShift, other k8s distros to be added in the future.
+
+Check the deployment files for the databases in the [k8s/openshift/db](k8s/openshift/db) folder and the apps in the [k8s/openshift/apps](k8s/openshift/apps) folder and replace the relevant placeholders (Docker hub or other ID and yourdomain and tld).
+
+### Questions, support, issues?
+Hit that `New Issue` button, or reach out to the author directly.
