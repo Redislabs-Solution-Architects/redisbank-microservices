@@ -34,7 +34,7 @@ Contrary to the monolithic version of this application (<https://github.com/Redi
 
 ### Kubernetes
 
-For now this repo has files for deploying on OpenShift, other k8s distros to be added in the future.
+For now this repo has files for deploying on OpenShift, other k8s distros to be added in the future. Note: this will most likely work on just about any k8s distro with a few modifications here and there. Expect more documentation here in the future.
 
 Check the deployment files for the databases in the [k8s/openshift/db](k8s/openshift/db) folder and the apps in the [k8s/openshift/apps](k8s/openshift/apps) folder and replace the relevant placeholders (Docker hub or other ID and yourdomain and tld).
 
