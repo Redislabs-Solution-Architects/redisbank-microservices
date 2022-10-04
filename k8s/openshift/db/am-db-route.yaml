@@ -1,0 +1,17 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: am-db
+  namespace: redis-demo
+spec:
+  host: am-db.<yourdomain.tld>
+  port:
+    targetPort: redis
+  tls:
+    insecureEdgeTerminationPolicy: None
+    termination: passthrough
+  to:
+    kind: Service
+    name: am-db
+    weight: 100
+  wildcardPolicy: None
