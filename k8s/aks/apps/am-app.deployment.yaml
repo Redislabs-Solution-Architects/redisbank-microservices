@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redisbank-am-deployment
+spec:
+  selector:
+    matchLabels:
+      app: redisbank-am
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: redisbank-am
+    spec:
+      containers:
+      - name: redisbank-am
+        image: <youracrname>.azurecr.io/redisbank-am:latest
+        imagePullPolicy: Always
+        ports:
+        - name: redisbank-am
+          containerPort: 8082
+        env:
+        - name: SPRING_REDIS_HOSTTR
+          valueFrom:
+            secretKeyRef:
+              name: redb-eventbus
+              key: service_name
+        - name: SPRING_REDIS_PORTTR
+          valueFrom:
+            secretKeyRef:
+              name: redb-eventbus
+              key: port
+        - name: SPRING_REDIS_HOST
+          valueFrom:
+            secretKeyRef:
+              name: redb-am-db
+              key: service_name
+        - name: SPRING_REDIS_PORT
+          valueFrom:
+            secretKeyRef:
+              name: redb-am-db
+              key: port
+        - name: SPRING_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redb-am-db
+              key: password
+        - name: SPRING_PROFILES_ACTIVE
+          value: "tls"

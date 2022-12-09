@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redisbank-ui
+  labels:
+    app: redisbank-ui
+spec:
+  ports:
+  - port: 8080
+    name: redisbank-ui
+    protocol: TCP
+  selector:
+    app: redisbank-ui
