@@ -51,6 +51,10 @@ az aks create \
 --attach-acr <acr> \
 --node-vm-size Standard_D4s_v3
 ```
+Connect to the AKS cluster:
+```
+az aks get-credentials --resource-group <resource-group-name> --name <cluster-name>
+```
 
 * For an active-active demo, you need to create two AKS clusters (for example, in seperate Azure regions).
 
@@ -78,7 +82,7 @@ At time of writing, you can't automate creation of active-active databases using
 
 By default, the active-active database doesn't require a password. As above, before venturing into active-active, you may choose to stand up a common Redis database that contains the Redis Stream datatype. To avoid modifying the Redis Bank UI code, set an empty password when you create this database - this can be done by creating a Kubernetes secret that you reference in your Redis Enterprise cluster custom resource definition:
 
-`kubectl create secret generic redisbank-secret --from-literal=password=''`
+`kubectl create secret generic redb-eventbus --from-literal=password=''`
 
 ## Build container images and push to Azure Container Registry
 

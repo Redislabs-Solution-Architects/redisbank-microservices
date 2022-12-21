@@ -5,4 +5,4 @@ metadata:
 spec:
   memorySize: 100MB
   tlsMode: enabled
-  databaseSecretName: <your-secret-name>
+  databaseSecretName: redb-eventbus
