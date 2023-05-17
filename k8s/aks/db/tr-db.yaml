@@ -7,6 +7,6 @@ spec:
   tlsMode: enabled
   modulesList:
   - name: search
-    version: 2.4.14
+    version: 2.6.6
   - name: ReJSON
-    version: 2.2.0
+    version: 2.4.6
