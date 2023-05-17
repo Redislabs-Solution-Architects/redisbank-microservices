@@ -21,14 +21,8 @@ spec:
           containerPort: 8080
         env:
         - name: SPRING_REDIS_HOST
-          valueFrom:
-            secretKeyRef:
-              name: redb-eventbus
-              key: service_name
+          value: $(EVENTBUS_SERVICE_HOST)
         - name: SPRING_REDIS_PORT
-          valueFrom:
-            secretKeyRef:
-              name: redb-eventbus
-              key: port
+          value: $(EVENTBUS_SERVICE_PORT)
         - name: SPRING_PROFILES_ACTIVE
           value: "tls"

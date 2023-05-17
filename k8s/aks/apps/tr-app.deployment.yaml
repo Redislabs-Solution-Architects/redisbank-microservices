@@ -21,15 +21,9 @@ spec:
           containerPort: 8083
         env:
         - name: SPRING_REDIS_HOSTTR
-          valueFrom:
-            secretKeyRef:
-              name: redb-eventbus
-              key: service_name
+          value: $(EVENTBUS_SERVICE_HOST)
         - name: SPRING_REDIS_PORTTR
-          valueFrom:
-            secretKeyRef:
-              name: redb-eventbus
-              key: port
+          value: $(EVENTBUS_SERVICE_PORT)
         - name: SPRING_REDIS_HOST
           valueFrom:
             secretKeyRef:

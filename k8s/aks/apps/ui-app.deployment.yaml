@@ -33,15 +33,9 @@ spec:
         - name: STOMP_PROTOCOL
           value: "ws"
         - name: SPRING_REDIS_HOST
-          valueFrom:
-            secretKeyRef:
-              name: redb-eventbus
-              key: service_name
+          value: "eventbus-cluster.<region>.<example>.demo.redislabs.com"
         - name: SPRING_REDIS_PORT
-          valueFrom:
-            secretKeyRef:
-              name: redb-eventbus
-              key: port
+          value: "443"
         - name: SPRING_PROFILES_ACTIVE
           value: "tls"
 
