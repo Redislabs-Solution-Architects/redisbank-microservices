@@ -7,7 +7,7 @@ metadata:
     haproxy-ingress.github.io/ssl-passthrough: "true"
 spec:
   rules:
-  - host: pfm-db-cluster.<region1>.<example>.demo.redislabs.com
+  - host: pfm-db.<region1>.<example>.demo.redislabs.com
     http:
       paths:
       - path: /
