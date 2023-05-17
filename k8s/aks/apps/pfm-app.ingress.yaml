@@ -6,7 +6,7 @@ metadata:
     kubernetes.io/ingress.class: haproxy
 spec:
   rules:
-  - host: pfm.<region>.<example>.demo.redislabs.com
+  - host: pfm.<region1>.<example>.demo.redislabs.com
     http:
       paths:
       - path: /
