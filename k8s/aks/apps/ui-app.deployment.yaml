@@ -21,19 +21,19 @@ spec:
           containerPort: 8080
         env:
         - name: AM_URI
-          value: "http://am.<region>.<example>.demo.redislabs.com"
+          value: "http://am.<region1>.<example>.demo.redislabs.com"
         - name: PFM_URI
-          value: "http://pfm.<region>.<example>.demo.redislabs.com"
+          value: "http://pfm.<region1>.<example>.demo.redislabs.com"
         - name: TR_URI
-          value: "http://tr.<region>.<example>.demo.redislabs.com"
+          value: "http://tr.<region1>.<example>.demo.redislabs.com"
         - name: STOMP_HOST
-          value: "ui.<region>.<example>.demo.redislabs.com"
+          value: "ui.<region1>.<example>.demo.redislabs.com"
         - name: STOMP_PORT
           value: "80"
         - name: STOMP_PROTOCOL
           value: "ws"
         - name: SPRING_REDIS_HOST
-          value: "eventbus-cluster.<region>.<example>.demo.redislabs.com"
+          value: "eventbus-cluster.<region1>.<example>.demo.redislabs.com"
         - name: SPRING_REDIS_PORT
           value: "443"
         - name: SPRING_PROFILES_ACTIVE
