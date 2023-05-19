@@ -2,9 +2,9 @@
 
 This version of Redis Bank is excellent for demonstrating the active-active capabilities of Redis Enterprise on managed Kubernetes clusters.
 
-For example, you could deploy the microservices and UI in 'UK South', and the data generation service in 'UK West' - Redis will handle the data replication between the regions. 
+For example, you could deploy the microservices and UI in 'UK South' Azure region, and the data generation service in 'UK West' - Redis Enterprise will handle the data replication between the regions. 
 
-The instructions below detail the steps for getting Redis Enterprise configured on Azure Kubernetes Servce (AKS) alongside the Redis Bank microservices and UI.
+The instructions below detail the steps for getting Redis Enterprise configured on Azure Kubernetes Service (AKS) alongside the Redis Bank microservices and UI.
 
 ## Prerequisites
 
@@ -15,7 +15,7 @@ The instructions below detail the steps for getting Redis Enterprise configured 
 
 ## Before you begin
 
-If you are not yet a Redis active-active aficionado, you may find it simpler to deploy a standard Redis Enterprise cluster (and databases) on AKS to begin with. Once everything is working end to end, you can modify the Redis configuration to support active-active and deploy the data generation application to a region seperate from the UI.
+If you are not yet a Redis active-active aficionado, you may find it simpler to get started by deploying a standard Redis Enterprise cluster (and databases) on AKS within a single region. Once everything is working end to end, you can deploy a second AKS cluster and configure an active-active database. Finally, deploy the data generation application to a region separate from the UI and microservices (e.g. 'UK West').
 
 ## Azure Kubernetes Service
 
@@ -56,7 +56,7 @@ Connect to the AKS cluster:
 az aks get-credentials --resource-group <resource-group-name> --name <cluster-name>
 ```
 
-* For an active-active demo, you need to create two AKS clusters (for example, in seperate Azure regions).
+* For an active-active demo, you need to create two AKS clusters (for example, in separate Azure regions).
 
 * If you have issues provisioning AKS clusters, check the virtual machine [quota](https://learn.microsoft.com/en-us/azure/quotas/view-quotas) for your region.
 
@@ -72,17 +72,28 @@ There is a standard custom resource for a cluster in the [../aks/rec](../aks/rec
 
 ## Configure databases
 
-Redis Bank utilises four databases (one active-active database which contains a stream, and individual databases for each respective microsevice - personal finance management, transactions and account management).
+Redis Bank utilizes four databases (one active-active database which contains a stream, and individual databases for each respective microservice - personal finance management, transactions and account management).
 
 You may choose to expose these databases via ingress controllers, or route traffic internally and leverage the services that make these databases available inside Kubernetes.
 
-At time of writing, you can't automate creation of active-active databases using custom resource definitions. There is an example command for use with `crdb-cli` which you can find here:
+Here is an example of using `crdb-cli` to create an active-active database. In this following example the following values are being used in the placeholders described in the [documentation](https://docs.redis.com/latest/kubernetes/active-active/create-aa-database/):
 
-//TODO
+* Kubernetes namespace: ns-uksouth and ns-ukwest
+* Cluster names: rec-uksouth and rec-ukwest
+* Wildcard DNS records: *.uksouth.aks.demo.redislabs.com and *.ukwest.aks.demo.redislabs.com
 
-By default, the active-active database doesn't require a password. As above, before venturing into active-active, you may choose to stand up a common Redis database that contains the Redis Stream datatype. To avoid modifying the Redis Bank UI code, set an empty password when you create this database - this can be done by creating a Kubernetes secret that you reference in your Redis Enterprise cluster custom resource definition:
+```
+crdb-cli crdb create \
+  --name eventbus \
+  --memory-size 200mb \
+  --encryption yes \
+  --instance fqdn=rec-uksouth.ns-uksouth.svc.cluster.local,url=https://api.uksouth.aks.demo.redislabs.com,username=demo@redislabs.com,password=<password>,replication_endpoint=eventbus-cluster.uksouth.aks.demo.redislabs.com:443,replication_tls_sni=eventbus-cluster.uksouth.aks.demo.redislabs.com \
+  --instance fqdn=rec-ukwest.ns-ukwest.svc.cluster.local,url=https://api.ukwest.aks.demo.redislabs.com,username=demo@redislabs.com,password=<password>,replication_endpoint=eventbus-cluster.ukwest.aks.demo.redislabs.com:443,replication_tls_sni=eventbus-cluster.ukwest.aks.demo.redislabs.com
 
-`kubectl create secret generic redb-eventbus --from-literal=password=''`
+```
+> **_NOTE:_**  Once the database has been created, you will need to log in to each cluster and 'enable TLS for all communications'.
+
+> **_NOTE:_** The active-active database command above isn't using the password flag. If testing the deployments using the [standard database example](../aks/db/eventbus-db.yaml), you can set an empty password by creating a Kubernetes secret before you create the database: `kubectl create secret generic redb-eventbus --from-literal=password=''`
 
 ## Build container images and push to Azure Container Registry
 
@@ -108,7 +119,7 @@ docker push <acrname>.azurecr.io/redisbank-ui:latest
 
 Once you have container images in your Azure Container Registry, it's simply a matter of updating the Kubernetes manifests to match your configuration, and deploy them via `kubectl`.
 
-Check the deployment files for the databases in the [../aks/db](../aks/db) folder and the apps in the [../aks/apps](../aks/apps/) folder and replace the relevant placeholders (Docker hub or other ID and yourdomain and tld).
+Check the deployment files for the databases in the [../aks/db](../aks/db) folder and the apps in the [../aks/apps](../aks/apps/) folder and replace the relevant placeholders.
 
 For example, to deploy the account management microservice:
 
