@@ -1,0 +1,13 @@
+apiVersion: "app.redislabs.com/v1"
+kind: "RedisEnterpriseCluster"
+metadata:
+  name: "rec-region-2"
+spec:
+  nodes: 3
+  activeActive:
+    apiIngressUrl: api.<region2>.<example>.demo.redislabs.com
+    dbIngressSuffix: -cluster.<region2>.<example>.demo.redislabs.com
+    ingressAnnotations:
+      kubernetes.io/ingress.class: haproxy
+      haproxy-ingress.github.io/ssl-passthrough: "true"
+    method: ingress

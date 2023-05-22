@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redisbank-pfm-deployment
+spec:
+  selector:
+    matchLabels:
+      app: redisbank-pfm
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: redisbank-pfm
+    spec:
+      containers:
+      - name: redisbank-pfm
+        image: <youracrname>.azurecr.io/redisbank-pfm:latest
+        imagePullPolicy: Always
+        ports:
+        - name: redisbank-pfm
+          containerPort: 8081
+        env:
+        - name: SPRING_REDIS_HOSTTR
+          value: $(EVENTBUS_SERVICE_HOST)
+        - name: SPRING_REDIS_PORTTR
+          value: $(EVENTBUS_SERVICE_PORT)
+        - name: SPRING_REDIS_HOST
+          valueFrom:
+            secretKeyRef:
+              name: redb-pfm-db
+              key: service_name
+        - name: SPRING_REDIS_PORT
+          valueFrom:
+            secretKeyRef:
+              name: redb-pfm-db
+              key: port
+        - name: SPRING_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redb-pfm-db
+              key: password
+        - name: SPRING_PROFILES_ACTIVE
+          value: "tls"

@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: am-db-ingress
+  annotations:
+    kubernetes.io/ingress.class: haproxy
+    haproxy-ingress.github.io/ssl-passthrough: "true"
+spec:
+  rules:
+  - host: am-db.<region1>.<example>.demo.redislabs.com
+    http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: am-db
+            port:
+              name: redis

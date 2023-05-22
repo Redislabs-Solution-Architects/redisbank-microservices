@@ -1,0 +1,10 @@
+apiVersion: app.redislabs.com/v1alpha1
+kind: RedisEnterpriseDatabase
+metadata:
+  name: am-db
+spec:
+  memorySize: 100MB
+  tlsMode: enabled
+  modulesList:
+  - name: ReJSON
+    version: 2.4.6

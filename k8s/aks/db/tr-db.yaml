@@ -1,0 +1,12 @@
+apiVersion: app.redislabs.com/v1alpha1
+kind: RedisEnterpriseDatabase
+metadata:
+  name: tr-db
+spec:
+  memorySize: 100MB
+  tlsMode: enabled
+  modulesList:
+  - name: search
+    version: 2.6.6
+  - name: ReJSON
+    version: 2.4.6

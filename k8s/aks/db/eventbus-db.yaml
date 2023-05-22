@@ -1,0 +1,8 @@
+apiVersion: app.redislabs.com/v1alpha1
+kind: RedisEnterpriseDatabase
+metadata:
+  name: eventbus
+spec:
+  memorySize: 100MB
+  tlsMode: enabled
+  databaseSecretName: redb-eventbus
